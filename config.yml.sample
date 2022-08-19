@@ -1,0 +1,20 @@
+title: Web Archive Search Index API
+description: A wrapper API for ES indexes of web archival collections.
+wayback: https://web.archive.org/web
+apiurl: http://localhost:8000/v1
+maxpage: 1000
+maxwc: 30
+debug: False
+termfields:
+  - title
+  - snippet
+termaggrs:
+  - top
+  - significant
+  - rare
+eshosts:
+  - http://es-instance-1.localhost:9200
+  - http://es-instance-2.localhost:9200
+indexes:
+  - index_name_1
+  - index_name_2:different_path_scope
