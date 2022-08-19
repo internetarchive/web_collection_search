@@ -83,5 +83,5 @@ $ docker compose up
 
 Access an interactive API documentation and a collection index explorer in a web browser:
 
-* API: http://localhost:8000/v1/docs
+* API: http://localhost:8000/docs
 * UI: http://localhost:8001/
