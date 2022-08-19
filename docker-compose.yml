@@ -1,0 +1,20 @@
+services:
+  api:
+    image: colsearch
+    build: .
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+  ui:
+    image: colsearch
+    build: .
+    environment:
+      APIURL: http://api:8000/v1
+    ports:
+      - 8001:8501
+    volumes:
+      - .:/app
+    depends_on:
+      - api
+    command: streamlit run ui.py
