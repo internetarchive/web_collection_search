@@ -1,3 +1,4 @@
+import json
 import os
 
 from enum import Enum
@@ -15,6 +16,10 @@ def load_config():
 
 def env_to_list(name: str):
     return " ".join(os.getenv(name, "").split(",")).split()
+
+
+def env_to_dict(name: str):
+    return json.loads(os.getenv(name, "{}"))
 
 
 def list_to_enum(name: str, koptv: list):

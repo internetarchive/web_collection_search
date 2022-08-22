@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
-from utils import load_config, env_to_list, list_to_enum
+from utils import load_config, env_to_list, env_to_dict, list_to_enum
 
 
 class ApiVersion(str, Enum):
@@ -27,13 +27,14 @@ config["termfields"] = env_to_list("TERMFIELDS") or config.get("termfields", [])
 config["termaggrs"] = env_to_list("TERMAGGRS") or config.get("termaggrs", [])
 config["indexes"] = env_to_list("INDEXES") or config.get("indexes", [])
 config["eshosts"] = env_to_list("ESHOSTS") or config.get("eshosts", ["http://localhost:9200"])
+config["esopts"] = env_to_dict("ESOPTS") or config.get("esopts", {})
 config["wayback"] = os.getenv("WAYBACK", config.get("wayback", "https://web.archive.org/web")).rstrip("/")
 config["maxpage"] = int(os.getenv("MAXPAGE", config.get("maxpage", 1000)))
 config["title"] = os.getenv("TITLE", config.get("title", ""))
 config["description"] = os.getenv("DESCRIPTION", config.get("description", ""))
 config["debug"] = os.getenv("DEBUG", config.get("debug", False))
 
-ES = Elasticsearch(config["eshosts"])
+ES = Elasticsearch(config["eshosts"], **config["esopts"])
 
 Collection = list_to_enum("Collection", config["indexes"])
 TermField = list_to_enum("TermField", config["termfields"])
