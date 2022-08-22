@@ -4,6 +4,7 @@
 import base64
 import os
 
+from enum import Enum
 from typing import Union
 from urllib.parse import quote_plus
 
@@ -17,7 +18,9 @@ from pydantic import BaseModel
 from utils import load_config, env_to_list, list_to_enum
 
 
-VERSION_1 = "v1"
+class ApiVersion(str, Enum):
+    v1 = "1.0.0"
+
 
 config = load_config()
 config["termfields"] = env_to_list("TERMFIELDS") or config.get("termfields", [])
@@ -50,20 +53,32 @@ if config["debug"]:
     })
 
 
-app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+app = FastAPI(
+    version=list(ApiVersion)[-1],
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_methods=["GET", "HEAD", "POST", "OPTIONS"],
     allow_headers=["*"],
-    expose_headers=["link", "x-resume-token"]
+    expose_headers=["link", "x-resume-token", "x-api-version"]
 )
+
+@app.middleware("http")
+async def add_api_version_header(req: Request, call_next):
+    res = await call_next(req)
+    res.headers["x-api-version"] = f"{req.app.version}"
+    return res
+
 
 v1 = FastAPI(
     title=config.get("title", "Interactive API") + " Docs",
     description=config.get("description", "A wrapper API for ES indexes."),
-    version=VERSION_1,
+    version=ApiVersion.v1,
     openapi_tags=tags
 )
 
@@ -230,9 +245,10 @@ def api_entrypoint(req: Request):
     """
     Link to the interactive API documentation
     """
-    href = f"{req.scope.get('root_path')}/{VERSION_1}/docs"
+    ver = req.app.version.name if isinstance(req.app.version, Enum) else req.app.version
+    href = f"{req.scope.get('root_path')}/{ver}/docs"
     return "\n".join(['<ul>',
-                      f'<li><a href="{href}">Interactive API Docs ({VERSION_1})</a></li>',
+                      f'<li><a href="{href}">Interactive API Docs ({ver})</a></li>',
                       '</ul>'])
 
 
@@ -242,7 +258,8 @@ def api_entrypoint_docs(req: Request):
     """
     Redirect to recent API documentation
     """
-    return f'{req.scope.get("root_path")}/{VERSION_1}/docs'
+    ver = req.app.version.name if isinstance(req.app.version, Enum) else req.app.version
+    return f'{req.scope.get("root_path")}/{ver}/docs'
 
 
 @app.get("/redoc", response_class=RedirectResponse)
@@ -251,7 +268,8 @@ def api_entrypoint_redoc(req: Request):
     """
     Redirect to recent API documentation
     """
-    return f'{req.scope.get("root_path")}/{VERSION_1}/redoc'
+    ver = req.app.version.name if isinstance(req.app.version, Enum) else req.app.version
+    return f'{req.scope.get("root_path")}/{ver}/redoc'
 
 
 @v1.get("/", response_class=HTMLResponse, tags=["info"])
@@ -340,7 +358,7 @@ def _search_result(collection: Collection, q: str, req: Request, resp: Response,
 
 @v1.get("/{collection}/search/result", tags=["data"])
 @v1.head("/{collection}/search/result", include_in_schema=False)
-def search_result_via_query_params(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None):  # pylint: disable=line-too-long # noqa: E501
+def search_result_via_query_params(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None):  # pylint: disable=line-too-long
     """
     Paged response of search result
     """
@@ -423,7 +441,7 @@ def get_article(collection: Collection, id: str, req: Request):  # pylint: disab
     return format_match(hit, f'{req.base_url}{req.scope.get("root_path").lstrip("/")}', collection.value, True)
 
 
-app.mount(f"/{VERSION_1}", v1)
+app.mount(f"/{ApiVersion.v1.name}", v1)
 
 
 if __name__ == "__main__":
