@@ -2,17 +2,16 @@
 
 import os
 import random
+
+from urllib.parse import quote_plus
+
 import requests
-import sys
-import yaml
 
 import matplotlib.pyplot as plt
 import altair as alt
 import streamlit as st
 import pandas as pd
-import numpy as np
 
-from urllib.parse import quote_plus
 from wordcloud import WordCloud
 
 from utils import load_config, env_to_list
@@ -30,11 +29,12 @@ st.set_page_config(page_title=config["title"], layout="wide")
 st.title(config["title"])
 
 
-#@st.cache(ttl=300)
-def load_data(c, q, ep="search/overview"):
-    r = requests.get(f"{config['apiurl']}/{c}/{ep}?q={quote_plus(q)}")
+# @st.cache(ttl=300)
+def load_data(cname, qstr, ep="search/overview"):
+    r = requests.get(f"{config['apiurl']}/{cname}/{ep}?q={quote_plus(qstr)}")
     if r.ok:
         return r.json()
+    return None
 
 
 qp = st.experimental_get_query_params()
@@ -74,7 +74,10 @@ cols[3].metric("Days", f"{len(ov['dailycounts']):,}")
 tbs = st.tabs(["Top Hits", "Data"])
 res = ["Title | Domain | Published | Archived | Language", ":---|:---|:---:|:---:|:---:"]
 for m in ov["matches"]:
-    res.append(f"[{m.get('title', 'UNKNOWN').replace('|', '&vert;')}]({m.get('archive_playback_url') or '#'}) | `{m.get('domain') or '~'}` | `{m.get('publication_date') or '~'}` | `{(m.get('capture_time') or '~')[:10]}` | `{m.get('language') or '~'}`")
+    t = m.get("title", "UNKNOWN").replace("|", "&vert;")
+    res.append(" | ".join([f"[{t}]({m.get('archive_playback_url') or '#'})",
+                           f"`{m.get('domain') or '~'}` | `{m.get('publication_date') or '~'}`",
+                           f"`{(m.get('capture_time') or '~')[:10]}` | `{m.get('language') or '~'}`"]))
 tbs[0].write("\n".join(res))
 tbs[1].write(ov["matches"])
 
@@ -114,7 +117,12 @@ for fld in ["title", "snippet"]:
             tbs = st.tabs([f"{aggr} {fld} terms".title(), "Data"])
             tt = load_data(col, q, f"terms/{fld}/{aggr}")
             if tt:
-                sample = (dict(random.sample(list(tt.items()), config["maxwc"])) if aggr == "rare" else dict(list(tt.items())[:config["maxwc"]])) if len(tt) > config["maxwc"] else tt
+                sample = tt
+                if len(tt) > config["maxwc"]:
+                    if aggr == "rare":
+                        sample = dict(random.sample(list(tt.items()), config["maxwc"]))
+                    else:
+                        sample = dict(list(tt.items())[:config["maxwc"]])
                 wc = WordCloud(background_color="white")
                 wc.generate_from_frequencies(sample)
                 fig, ax = plt.subplots()
