@@ -7,10 +7,8 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    name: Lint
+    name: Lint in Docker
     steps:
       - uses: actions/checkout@v3
-      - name: Lint Python
-        run: |
-          pip install --user pylint
-          pylint --max-line-length=120 --good-names="c,ct,e,ep,id,q,r" --disable="C0114,C0115,C0116" --extension-pkg-whitelist="pydantic" *.py
+      - name: Build Docker Image
+        run: ./Dockerfile
