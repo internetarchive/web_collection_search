@@ -1,14 +1,15 @@
 import os
-import yaml
 
 from enum import Enum
+
+import yaml
 
 
 def load_config():
     conf = os.getenv("CONFIG", "config.yml")
     try:
-        return yaml.safe_load(open(conf))
-    except OSError as e:
+        return yaml.safe_load(open(conf, encoding="UTF-8"))
+    except OSError:
         return {}
 
 

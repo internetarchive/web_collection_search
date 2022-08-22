@@ -8,10 +8,16 @@ WORKDIR /app
 CMD     ["./api.py"]
 
 RUN     pip install --no-cache-dir \
+            altair \
             "elasticsearch>=7.0.0,<8.0.0" \
             fastapi \
+            matplotlib \
+            pandas \
+            pydantic \
+            requests \
             streamlit \
             "uvicorn[standard]" \
-            wordcloud
+            wordcloud \
+            yaml
 
 COPY . ./

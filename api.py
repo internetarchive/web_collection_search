@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 
+
 import base64
 import os
-import sys
 
-from collections import Counter
+from typing import Union
+from urllib.parse import quote_plus
+
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import TransportError
 from fastapi import FastAPI, Request, Response, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
-from typing import Union
-from urllib.parse import quote_plus
 
 from utils import load_config, env_to_list, list_to_enum
 
@@ -76,12 +76,12 @@ class PagedQuery(Query):
     resume: Union[str, None] = None
 
 
-def encode(str: str):
-    return base64.b64encode(str.encode(), b"-_").decode()
+def encode(strng: str):
+    return base64.b64encode(strng.encode(), b"-_").decode()
 
 
-def decode(str: str):
-    return base64.b64decode(str.encode(), b"-_").decode()
+def decode(strng: str):
+    return base64.b64decode(strng.encode(), b"-_").decode()
 
 
 def cs_basic_query(q: str):
@@ -230,14 +230,15 @@ def api_entrypoint(req: Request):
     """
     Link to the interactive API documentation
     """
+    href = f"{req.scope.get('root_path')}/{VERSION_1}/docs"
     return "\n".join(['<ul>',
-            f'<li><a href="{req.scope.get("root_path")}/{VERSION_1}/docs">Interactive API Docs ({VERSION_1})</a></li>',
-            '</ul>'])
+                      f'<li><a href="{href}">Interactive API Docs ({VERSION_1})</a></li>',
+                      '</ul>'])
 
 
 @app.get("/docs", response_class=RedirectResponse)
 @app.head("/docs", response_class=RedirectResponse)
-def api_entrypoint(req: Request):
+def api_entrypoint_docs(req: Request):
     """
     Redirect to recent API documentation
     """
@@ -246,7 +247,7 @@ def api_entrypoint(req: Request):
 
 @app.get("/redoc", response_class=RedirectResponse)
 @app.head("/redoc", response_class=RedirectResponse)
-def api_entrypoint(req: Request):
+def api_entrypoint_redoc(req: Request):
     """
     Redirect to recent API documentation
     """
@@ -259,7 +260,8 @@ def version_root(req: Request):
     """
     Links to various collections
     """
-    return "\n".join(['<ul>'] + [f'<li><a href="{req.scope.get("root_path")}/{col.value}">{col.value}</a></li>' for col in Collection] + ['</ul>'])
+    lis = [f'<li><a href="{req.scope.get("root_path")}/{col.value}">{col.value}</a></li>' for col in Collection]
+    return "\n".join(['<ul>'] + lis + ['</ul>'])
 
 
 @v1.get("/{collection}", response_class=HTMLResponse, tags=["info"])
@@ -269,10 +271,10 @@ def collection_root(collection: Collection, req: Request):
     Links to various collection API endpoints
     """
     return "\n".join(['<ul>',
-            f'<li><a href="{req.scope.get("root_path")}/{collection.value}/search">Search API</a></li>',
-            f'<li><a href="{req.scope.get("root_path")}/{collection.value}/terms">Related Terms API</a></li>',
-            f'<li><a href="{req.scope.get("root_path")}/{collection.value}/article">Artcile</a></li>',
-            '</ul>'])
+                      f'<li><a href="{req.scope.get("root_path")}/{collection.value}/search">Search API</a></li>',
+                      f'<li><a href="{req.scope.get("root_path")}/{collection.value}/terms">Related Terms API</a></li>',
+                      f'<li><a href="{req.scope.get("root_path")}/{collection.value}/article">Artcile</a></li>',
+                      '</ul>'])
 
 
 @v1.get("/{collection}/search", response_class=HTMLResponse, tags=["info"])
@@ -281,24 +283,28 @@ def search_root(collection: Collection, req: Request):
     """
     Links to various search API endpoints
     """
+    spath = f"{req.scope.get('root_path')}/{collection.value}/search"
     return "\n".join(['<ul>',
-            f'<li><a href="{req.scope.get("root_path")}/{collection.value}/search/overview">Search Overview</a></li>',
-            f'<li><a href="{req.scope.get("root_path")}/{collection.value}/search/result">Search Result</a></li>',
-            '</ul>'])
+                      f'<li><a href="{spath}/overview">Search Overview</a></li>',
+                      f'<li><a href="{spath}/result">Search Result</a></li>',
+                      '</ul>'])
 
 
 def _search_overview(collection: Collection, q: str, req: Request):
     res = ES.search(index=collection.name, body=cs_overview_query(q))
     if not res["hits"]["hits"]:
         raise HTTPException(status_code=404, detail="No results found!")
+    total = res["hits"]["total"]["value"]
+    tldsum = sum(item["doc_count"] for item in res["aggregations"]["tld"]["buckets"])
+    base = f'{req.base_url}{req.scope.get("root_path").lstrip("/")}'
     return {
         "query": q,
-        "total": max(res["hits"]["total"]["value"], sum(item["doc_count"] for item in res["aggregations"]["tld"]["buckets"])),
+        "total": max(total, tldsum),
         "topdomains": format_counts(res["aggregations"]["domain"]["buckets"]),
         "toptlds": format_counts(res["aggregations"]["tld"]["buckets"]),
         "toplangs": format_counts(res["aggregations"]["lang"]["buckets"]),
         "dailycounts": format_day_counts(res["aggregations"]["daily"]["buckets"]),
-        "matches": [format_match(h, f'{req.base_url}{req.scope.get("root_path").lstrip("/")}', collection.value) for h in res["hits"]["hits"]]
+        "matches": [format_match(h, base, collection.value) for h in res["hits"]["hits"]]
     }
 
 
@@ -323,16 +329,18 @@ def _search_result(collection: Collection, q: str, req: Request, resp: Response,
     res = ES.search(index=collection.name, body=cs_paged_query(q, resume))
     if not res["hits"]["hits"]:
         raise HTTPException(status_code=404, detail="No results found!")
+    base = f'{req.base_url}{req.scope.get("root_path").lstrip("/")}'
+    qurl = f"{base}/{collection.value}/search/result?q={quote_plus(q)}"
     if len(res["hits"]["hits"]) == config["maxpage"]:
         resume_key = encode(res["hits"]["hits"][-1]["sort"][0])
         resp.headers["x-resume-token"] = resume_key
-        resp.headers["link"] = f'<{req.base_url}{req.scope.get("root_path").lstrip("/")}/{collection.value}/search/result?q={quote_plus(q)}&resume={resume_key}>; rel="next"'
-    return [format_match(h, f'{req.base_url}{req.scope.get("root_path").lstrip("/")}', collection.value) for h in res["hits"]["hits"]]
+        resp.headers["link"] = f'<{qurl}&resume={resume_key}>; rel="next"'
+    return [format_match(h, base, collection.value) for h in res["hits"]["hits"]]
 
 
 @v1.get("/{collection}/search/result", tags=["data"])
 @v1.head("/{collection}/search/result", include_in_schema=False)
-def search_result_via_query_params(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None):
+def search_result_via_query_params(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None):  # pylint: disable=line-too-long # noqa: E501
     """
     Paged response of search result
     """
@@ -369,7 +377,9 @@ def term_field_root(collection: Collection, req: Request):
     """
     Links to various term fields
     """
-    return "\n".join(['<ul>'] + [f'<li><a href="{req.scope.get("root_path")}/{collection.value}/terms/{field.value}">{field.value}</a></li>' for field in TermField] + ['</ul>'])
+    tbase = f"{req.scope.get('root_path')}/{collection.value}/terms"
+    lis = [f'<li><a href="{tbase}/{field.value}">{field.value}</a></li>' for field in TermField]
+    return "\n".join(['<ul>'] + lis + ['</ul>'])
 
 
 @v1.get("/{collection}/terms/{field}", response_class=HTMLResponse, tags=["info"])
@@ -378,7 +388,9 @@ def term_aggr_root(collection: Collection, req: Request, field: TermField):
     """
     Links to various term aggregations
     """
-    return "\n".join(['<ul>'] + [f'<li><a href="{req.scope.get("root_path")}/{collection.value}/terms/{field.value}/{aggr.value}">{aggr.value}</a></li>' for aggr in TermAggr] + ['</ul>'])
+    fbase = f"{req.scope.get('root_path')}/{collection.value}/terms/{field.value}"
+    lis = [f'<li><a href="{fbase}/{aggr.value}">{aggr.value}</a></li>' for aggr in TermAggr]
+    return "\n".join(['<ul>'] + lis + ['</ul>'])
 
 
 @v1.get("/{collection}/terms/{field}/{aggr}", tags=["data"])
@@ -400,14 +412,14 @@ def get_terms_via_payload(collection: Collection, payload: Query, field: TermFie
 
 @v1.get("/{collection}/article/{id}", tags=["data"])
 @v1.head("/{collection}/article/{id}", include_in_schema=False)
-def get_article(collection: Collection, id: str, req: Request):
+def get_article(collection: Collection, id: str, req: Request):  # pylint: disable=redefined-builtin
     """
     Fetch an individual article record by ID
     """
     try:
         hit = ES.get(index=collection.name, id=id)
     except TransportError as e:
-        raise HTTPException(status_code=404, detail=f"An article with ID {id} not found!")
+        raise HTTPException(status_code=404, detail=f"An article with ID {id} not found!") from e
     return format_match(hit, f'{req.base_url}{req.scope.get("root_path").lstrip("/")}', collection.value, True)
 
 
