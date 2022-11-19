@@ -1,7 +1,7 @@
 #!/usr/bin/env -S docker image build -t colsearch . -f
 
 # Base image
-FROM    python:3 AS base
+FROM    python:3.10 AS base
 ENV     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 WORKDIR /app
 CMD     ["./api.py"]
