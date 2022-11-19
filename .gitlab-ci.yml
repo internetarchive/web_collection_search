@@ -1,0 +1,11 @@
+variables:
+  NOMAD_VAR_HOSTNAMES: '["colsearch.crawl1.archive.org"]'
+  NOMAD_VAR_CHECK_PROTOCOL: 'tcp'
+  NOMAD_VAR_FORCE_PULL: 'true'
+  NOMAD_VAR_CPU: 2000
+  NOMAD_VAR_MEMORY: 2048
+
+include:
+  - project: 'wb/crawl-nomad/pipeline-toolbox'
+    ref: master
+    file: 'nomad-build-and-deploy.yml'
