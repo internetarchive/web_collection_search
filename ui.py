@@ -31,7 +31,7 @@ st.title(config["title"])
 
 # @st.cache(ttl=300)
 def load_data(cname, qstr, ep="search/overview"):
-    r = requests.get(f"{config['apiurl']}/{cname}/{ep}?q={quote_plus(qstr)}")
+    r = requests.get(f"{config['apiurl']}/{cname}/{ep}?q={quote_plus(qstr)}", timeout=60)
     if r.ok:
         return r.json()
     return None
