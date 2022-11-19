@@ -1,0 +1,4 @@
+include:
+  - project: 'wb/crawl-nomad/pipeline-toolbox'
+    ref: master
+    file: 'nomad-build-and-deploy.yml'
