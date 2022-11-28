@@ -155,14 +155,14 @@ def cs_overview_query(q: str):
 
 
 def cs_terms_query(q: str, field: str = "title", aggr: str = "top"):
-    resct = 100
+    resct = 200
     aggr_map = {
         "top": {
             "terms": {
                 "field": field,
                 "size": resct,
                 "min_doc_count": 10,
-                "shard_min_doc_count": 3
+                "shard_min_doc_count": 5
             }
         },
         "significant": {
@@ -170,7 +170,7 @@ def cs_terms_query(q: str, field: str = "title", aggr: str = "top"):
                 "field": field,
                 "size": resct,
                 "min_doc_count": 10,
-                "shard_min_doc_count": 3
+                "shard_min_doc_count": 5
             }
         },
         "rare": {
@@ -187,7 +187,7 @@ def cs_terms_query(q: str, field: str = "title", aggr: str = "top"):
         "aggregations": {
             "sample": {
                 "sampler": {
-                    "shard_size": 10 if aggr == "rare" else 100
+                    "shard_size": 10 if aggr == "rare" else 500
                 },
                 "aggregations": {
                     "topterms": aggr_map[aggr]
