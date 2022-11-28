@@ -32,7 +32,7 @@ config["wayback"] = os.getenv("WAYBACK", config.get("wayback", "https://web.arch
 config["maxpage"] = int(os.getenv("MAXPAGE", config.get("maxpage", 1000)))
 config["title"] = os.getenv("TITLE", config.get("title", ""))
 config["description"] = os.getenv("DESCRIPTION", config.get("description", ""))
-config["debug"] = os.getenv("DEBUG", config.get("debug", False))
+config["debug"] = str(os.getenv("DEBUG", config.get("debug", False))).lower() in ("true", "1", "t")
 
 ES = Elasticsearch(config["eshosts"], **config["esopts"])
 
