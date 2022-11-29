@@ -315,7 +315,7 @@ def _search_overview(collection: Collection, q: str, req: Request):
         raise HTTPException(status_code=404, detail="No results found!")
     total = res["hits"]["total"]["value"]
     tldsum = sum(item["doc_count"] for item in res["aggregations"]["tld"]["buckets"])
-    base = f'{req.base_url}{req.scope.get("root_path").lstrip("/")}'
+    base = os.getenv("PROXY_BASE", f'{req.base_url}{req.scope.get("root_path").lstrip("/")}')
     return {
         "query": q,
         "total": max(total, tldsum),
@@ -348,7 +348,7 @@ def _search_result(collection: Collection, q: str, req: Request, resp: Response,
     res = ES.search(index=collection.name, body=cs_paged_query(q, resume))
     if not res["hits"]["hits"]:
         raise HTTPException(status_code=404, detail="No results found!")
-    base = f'{req.base_url}{req.scope.get("root_path").lstrip("/")}'
+    base = os.getenv("PROXY_BASE", f'{req.base_url}{req.scope.get("root_path").lstrip("/")}')
     qurl = f"{base}/{collection.value}/search/result?q={quote_plus(q)}"
     if len(res["hits"]["hits"]) == config["maxpage"]:
         resume_key = encode(res["hits"]["hits"][-1]["sort"][0])
@@ -439,7 +439,8 @@ def get_article(collection: Collection, id: str, req: Request):  # pylint: disab
         hit = ES.get(index=collection.name, id=id)
     except TransportError as e:
         raise HTTPException(status_code=404, detail=f"An article with ID {id} not found!") from e
-    return format_match(hit, f'{req.base_url}{req.scope.get("root_path").lstrip("/")}', collection.value, True)
+    base = os.getenv("PROXY_BASE", f'{req.base_url}{req.scope.get("root_path").lstrip("/")}')
+    return format_match(hit, base, collection.value, True)
 
 
 app.mount(f"/{ApiVersion.v1.name}", v1)
