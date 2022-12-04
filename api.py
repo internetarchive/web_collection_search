@@ -296,7 +296,7 @@ def collection_root(collection: Collection, req: Request):
     return "\n".join(['<ul>',
                       f'<li><a href="{req.scope.get("root_path")}/{collection.value}/search">Search API</a></li>',
                       f'<li><a href="{req.scope.get("root_path")}/{collection.value}/terms">Related Terms API</a></li>',
-                      f'<li><a href="{req.scope.get("root_path")}/{collection.value}/article">Artcile</a></li>',
+                      f'<li><a href="{req.scope.get("root_path")}/{collection.value}/article">Article</a></li>',
                       '</ul>'])
 
 

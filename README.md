@@ -71,7 +71,7 @@ $ open config.yml
 ```
 
 Alternatively, these configs can also be set using environment variables by setting corresponding upper-case names of the cofig parameters.
-Environemnt variables that accept a list (e.g., `ESHOSTS` and `INDEXES`) can have commas or spaces as seprators.
+Environment variables that accept a list (e.g., `ESHOSTS` and `INDEXES`) can have commas or spaces as separators.
 
 If the config file name/location is different, specify it with `CONFIG` environment variable.
 
