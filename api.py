@@ -433,8 +433,8 @@ def get_terms_via_payload(collection: Collection, payload: Query, field: TermFie
     return _get_terms(collection, payload.q, field.value, aggr.value)
 
 
-@v1.get("/{collection}/article/{id}", tags=["data"])
-@v1.head("/{collection}/article/{id}", include_in_schema=False)
+@v1.get("/{collection}/article/{id:path}", tags=["data"])
+@v1.head("/{collection}/article/{id:path}", include_in_schema=False)
 def get_article(collection: Collection, id: str, req: Request):  # pylint: disable=redefined-builtin
     """
     Fetch an individual article record by ID
