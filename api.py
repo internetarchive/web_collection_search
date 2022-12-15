@@ -93,11 +93,11 @@ class PagedQuery(Query):
 
 
 def encode(strng: str):
-    return base64.b64encode(strng.encode(), b"-_").decode()
+    return base64.b64encode(strng.encode(), b"-_").decode().replace("=", "~")
 
 
 def decode(strng: str):
-    return base64.b64decode(strng.encode(), b"-_").decode()
+    return base64.b64decode(strng.replace("~", "=").encode(), b"-_").decode()
 
 
 def cs_basic_query(q: str):
@@ -222,7 +222,7 @@ def format_match(hit: dict, base: str, collection: str, expanded: bool = False):
         "url": src["url"],
         "original_capture_url": f"{config['wayback']}/{ct}id_/{src['url']}",
         "archive_playback_url": f"{config['wayback']}/{ct}/{src['url']}",
-        "article_url": f"{base}/{collection}/article/{hit['_id']}"
+        "article_url": f"{base}/{collection}/article/{encode(hit['_id'])}"
     }
     if expanded:
         res["surt_url"] = src["surt_url"]
@@ -440,9 +440,9 @@ def get_article(collection: Collection, id: str, req: Request):  # pylint: disab
     Fetch an individual article record by ID
     """
     try:
-        hit = ES.get(index=collection.name, id=id)
+        hit = ES.get(index=collection.name, id=decode(id))
     except TransportError as e:
-        raise HTTPException(status_code=404, detail=f"An article with ID {id} not found!") from e
+        raise HTTPException(status_code=404, detail=f"An article with ID {decode(id)} not found!") from e
     base = proxy_base_url(req)
     return format_match(hit, base, collection.value, True)
 
