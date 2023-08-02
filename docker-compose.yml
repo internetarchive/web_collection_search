@@ -4,8 +4,11 @@ services:
     build: .
     ports:
       - 8000:8000
+    networks:
+      - story_indexer
     volumes:
       - .:/app
+
   ui:
     image: colsearch
     build: .
@@ -13,8 +16,15 @@ services:
       APIURL: http://api:8000/v1
     ports:
       - 8001:8501
+    networks:
+      - story_indexer
     volumes:
       - .:/app
     depends_on:
       - api
     command: streamlit run ui.py
+
+networks:
+  story_indexer:
+    name: story_indexer
+    external: true
