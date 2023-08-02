@@ -74,7 +74,7 @@ cols[3].metric("Days", f"{len(ov['dailycounts']):,}")
 tbs = st.tabs(["Top Hits", "Data"])
 res = ["Title | Domain | Published | Archived | Language", ":---|:---|:---:|:---:|:---:"]
 for m in ov["matches"]:
-    t = m.get("title", "UNKNOWN").replace("|", "&vert;")
+    t = m.get("article_title", "UNKNOWN").replace("|", "&vert;")
     res.append(" | ".join([f"[{t}]({m.get('archive_playback_url') or '#'})",
                            f"`{m.get('canonical_domain') or '~'}` | `{m.get('publication_date') or '~'}`",
                            f"`{(m.get('capture_time') or '~')[:10]}` | `{m.get('language') or '~'}`"]))
@@ -110,7 +110,7 @@ for i, (k, v) in enumerate(fmap.items()):
         tbs[0].altair_chart(c, use_container_width=True)
         tbs[1].write(ov[v])
 
-for fld in ["article_title", "text_content"]:
+for fld in ["articl_title", "text_context"]:
     cols = st.columns(3)
     for i, aggr in enumerate(["top", "significant", "rare"]):
         with cols[i]:
