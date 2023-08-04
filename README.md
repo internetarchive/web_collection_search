@@ -2,7 +2,6 @@
 
 An API wrapper to the Elasticsearch index of web archival collections and a web UI to explore those indexes.
 
-
 ## ES Index
 
 The API service expects the following ES index schema, where `title` and `snippet` fields must have the `fielddata` enabled (if they have the type `text`) and `first_captured` field stores 14-digit datetime in the format `YYYYMMDDhhmmss`.
@@ -58,8 +57,8 @@ The API service expects the following ES index schema, where `title` and `snippe
   }
 }
 ```
-</details>
 
+</details>
 
 ## Run Services
 
@@ -83,5 +82,7 @@ $ docker compose up
 
 Access an interactive API documentation and a collection index explorer in a web browser:
 
-* API: http://localhost:8000/docs
-* UI: http://localhost:8001/
+- API: http://localhost:8000/docs
+- UI: http://localhost:8001/
+
+## Docker compose

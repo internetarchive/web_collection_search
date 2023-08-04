@@ -110,7 +110,7 @@ for i, (k, v) in enumerate(fmap.items()):
         tbs[0].altair_chart(c, use_container_width=True)
         tbs[1].write(ov[v])
 
-for fld in ["articl_title", "text_context"]:
+for fld in ["article_title", "text_context"]:
     cols = st.columns(3)
     for i, aggr in enumerate(["top", "significant", "rare"]):
         with cols[i]:
