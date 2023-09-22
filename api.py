@@ -133,7 +133,7 @@ def cs_overview_query(q: str):
             },
             "lang": {
                 "terms": {
-                    "field": "language",
+                    "field": "language.keyword",
                     "size": 100
                 }
             },
@@ -159,7 +159,7 @@ def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
     aggr_map = {
         "top": {
             "terms": {
-                "field": field,
+                "field": f"{field}.keyword",
                 "size": resct,
                 "min_doc_count": 10,
                 "shard_min_doc_count": 5
@@ -167,7 +167,7 @@ def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
         },
         "significant": {
             "significant_terms": {
-                "field": field,
+                "field": f"{field}.keyword",
                 "size": resct,
                 "min_doc_count": 10,
                 "shard_min_doc_count": 5
@@ -175,7 +175,7 @@ def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
         },
         "rare": {
             "rare_terms": {
-                "field": field,
+                "field": f"{field}.keyword",
                 "exclude": "[0-9].*"
             }
         }
