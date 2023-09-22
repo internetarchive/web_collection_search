@@ -8,8 +8,8 @@ Before you begin, ensure you have the following prerequisites in place:
 
 ### Network Setup
 
-The Web Search API should connect to the Elasticsearch clusture running from the `indexer`. 
-The `indexer` runs as a swarm clusture and therefore to expose the ES endpoint to the API, we need to deploy the Web Search API in the same overlay network
+The Web Search API should connect to the Elasticsearch cluster running from the `indexer`. 
+The `indexer` runs as a swarm cluster and therefore to expose the ES endpoint to the API, we need to deploy the Web Search API in the same overlay network
 
 To create the network (if non exists)
 
