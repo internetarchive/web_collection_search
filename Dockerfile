@@ -7,7 +7,7 @@ WORKDIR /app
 CMD     ["./api.py"]
 RUN     pip install --no-cache-dir \
             altair \
-            "elasticsearch>=7.0.0,<8.0.0" \
+            "elasticsearch==8.8.0" \
             fastapi \
             matplotlib \
             pandas \

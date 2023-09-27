@@ -103,16 +103,16 @@ def decode(strng: str):
 def cs_basic_query(q: str):
     return {
         "_source": [
-            "title",
+            "article_title",
             "publication_date",
             "language",
-            "domain",
+            "canonical_domain",
             "url",
             "first_captured"
         ],
         "query": {
             "query_string": {
-                "default_field": "snippet",
+                "default_field": "text_content",
                 "default_operator": "AND",
                 "query": q
             }
@@ -133,13 +133,13 @@ def cs_overview_query(q: str):
             },
             "lang": {
                 "terms": {
-                    "field": "language",
+                    "field": "language.keyword",
                     "size": 100
                 }
             },
             "domain": {
                 "terms": {
-                    "field": "domain",
+                    "field": "canonical_domain",
                     "size": 100
                 }
             },
@@ -154,12 +154,12 @@ def cs_overview_query(q: str):
     return query
 
 
-def cs_terms_query(q: str, field: str = "title", aggr: str = "top"):
+def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
     resct = 200
     aggr_map = {
         "top": {
             "terms": {
-                "field": field,
+                "field": f"{field}.keyword",
                 "size": resct,
                 "min_doc_count": 10,
                 "shard_min_doc_count": 5
@@ -167,7 +167,7 @@ def cs_terms_query(q: str, field: str = "title", aggr: str = "top"):
         },
         "significant": {
             "significant_terms": {
-                "field": field,
+                "field": f"{field}.keyword",
                 "size": resct,
                 "min_doc_count": 10,
                 "shard_min_doc_count": 5
@@ -175,7 +175,7 @@ def cs_terms_query(q: str, field: str = "title", aggr: str = "top"):
         },
         "rare": {
             "rare_terms": {
-                "field": field,
+                "field": f"{field}.keyword",
                 "exclude": "[0-9].*"
             }
         }
@@ -214,11 +214,11 @@ def format_match(hit: dict, base: str, collection: str, expanded: bool = False):
     src = hit["_source"]
     ct = src.get("first_captured") or "19700101000000"
     res = {
-        "title": src.get("title") or "[UNKNOWN]",
+        "article_title": src.get("article_title") or "[UNKNOWN]",
         "publication_date": (src.get("publication_date") or "")[:10],
         "capture_time": f"{ct[:4]}-{ct[4:6]}-{ct[6:8]}T{ct[8:10]}:{ct[10:12]}:{ct[12:14]}Z",
         "language": src.get("language") or "",
-        "domain": src["domain"],
+        "canonical_domain": src["canonical_domain"],
         "url": src["url"],
         "original_capture_url": f"{config['wayback']}/{ct}id_/{src['url']}",
         "archive_playback_url": f"{config['wayback']}/{ct}/{src['url']}",
@@ -226,7 +226,7 @@ def format_match(hit: dict, base: str, collection: str, expanded: bool = False):
     }
     if expanded:
         res["surt_url"] = src["surt_url"]
-        res["snippet"] = src.get("snippet", "")
+        res["text_content"] = src.get("text_content", "")
         res["text_extraction_method"] = src.get("text_extraction_method", "")
         res["version"] = src.get("version", "")
     return res
