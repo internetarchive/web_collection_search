@@ -1,5 +1,5 @@
-title: Web Archive Search Index API
-description: A wrapper API for ES indexes of web archival collections.
+title: Media Cloud News Search API
+description: A wrapper API for ES indexes of open web news articles maintained by Media Cloud.
 wayback: https://web.archive.org/web
 apiurl: http://localhost:8000/v1
 maxpage: 1000
