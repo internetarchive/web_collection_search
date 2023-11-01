@@ -287,6 +287,12 @@ def version_root(req: Request):
     return "\n".join(['<ul>'] + lis + ['</ul>'])
 
 
+@v1.get("/collections", tags=["data"])
+@v1.head("/collections", include_in_schema=False)
+def get_collections(req:Request):
+    return [c.name for c in Collection]
+
+
 @v1.get("/{collection}", response_class=HTMLResponse, tags=["info"])
 @v1.head("/{collection}", response_class=HTMLResponse, include_in_schema=False)
 def collection_root(collection: Collection, req: Request):
