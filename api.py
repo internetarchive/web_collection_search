@@ -290,7 +290,8 @@ def version_root(req: Request):
 @v1.get("/collections", tags=["data"])
 @v1.head("/collections", include_in_schema=False)
 def get_collections(req:Request):
-    return [c.name for c in Collection]
+    return [i for index in ES.indices.get('*')]
+    
 
 
 @v1.get("/{collection}", response_class=HTMLResponse, tags=["info"])
