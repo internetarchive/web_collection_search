@@ -28,7 +28,6 @@ config["termaggrs"] = env_to_list("TERMAGGRS") or config.get("termaggrs", [])
 config["indexes"] = env_to_list("INDEXES") or config.get("indexes", [])
 config["eshosts"] = env_to_list("ESHOSTS") or config.get("eshosts", ["http://localhost:9200"])
 config["esopts"] = env_to_dict("ESOPTS") or config.get("esopts", {})
-config["wayback"] = os.getenv("WAYBACK", config.get("wayback", "https://web.archive.org/web")).rstrip("/")
 config["maxpage"] = int(os.getenv("MAXPAGE", config.get("maxpage", 1000)))
 config["title"] = os.getenv("TITLE", config.get("title", ""))
 config["description"] = os.getenv("DESCRIPTION", config.get("description", ""))
@@ -203,7 +202,7 @@ def cs_paged_query(q: str, resume: Union[str, None] = None):
     query.update({
         "size": config["maxpage"],
         "track_total_hits": False,
-        "sort": [{"surt_url": "asc"}]
+        "sort": [{"publication_date": "asc"}]
     })
     if resume:
         query["search_after"] = [decode(resume)]
@@ -212,23 +211,21 @@ def cs_paged_query(q: str, resume: Union[str, None] = None):
 
 def format_match(hit: dict, base: str, collection: str, expanded: bool = False):
     src = hit["_source"]
-    ct = src.get("first_captured") or "19700101000000"
     res = {
         "article_title": src.get("article_title") or "[UNKNOWN]",
+        "normalized_article_title": src.get("normalized_article_title") or "[UNKNOWN]",
         "publication_date": (src.get("publication_date") or "")[:10],
-        "capture_time": f"{ct[:4]}-{ct[4:6]}-{ct[6:8]}T{ct[8:10]}:{ct[10:12]}:{ct[12:14]}Z",
+        "indexed_date": (src.get("indexed_date") or "")[:10],
         "language": src.get("language") or "",
-        "canonical_domain": src["canonical_domain"],
+        "full_langauge": src.get("full_language") or "",
         "url": src["url"],
-        "original_capture_url": f"{config['wayback']}/{ct}id_/{src['url']}",
-        "archive_playback_url": f"{config['wayback']}/{ct}/{src['url']}",
-        "article_url": f"{base}/{collection}/article/{encode(hit['_id'])}"
+        "original_url": src["original_url"],
+        "normalized_url": src["normalized_url"],
+        "canonical_domain": src["canonical_domain"]
     }
     if expanded:
-        res["surt_url"] = src["surt_url"]
         res["text_content"] = src.get("text_content", "")
-        res["text_extraction_method"] = src.get("text_extraction_method", "")
-        res["version"] = src.get("version", "")
+        res["text_extraction"] = src.get("text_extraction", "")
     return res
 
 
