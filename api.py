@@ -34,9 +34,20 @@ config["title"] = os.getenv("TITLE", config.get("title", ""))
 config["description"] = os.getenv("DESCRIPTION", config.get("description", ""))
 config["debug"] = str(os.getenv("DEBUG", config.get("debug", False))).lower() in ("true", "1", "t")
 
+ELASTICSEARCH_INDEX_NAME_PREFIX = os.getenv("ELASTICSEARCH_INDEX_NAME_PREFIX")
+
 ES = Elasticsearch(config["eshosts"], **config["esopts"])
 
-Collection = list_to_enum("Collection", config["indexes"])
+
+
+def get_allowed_collections():
+    #Only expose indexes with the correct prefix, and add a wildcard as well. 
+    all_indexes = [i for index in ES.indices.get('*') if ELASTICSEARCH_INDEX_NAME_PREFIX in i]
+    all_indexes.extend([f"{ELASTICSEARCH_INDEX_NAME_PREFIX}_*)"])
+    return all_indexes
+
+
+Collection = list_to_enum("Collection", get_allowed_collections())
 TermField = list_to_enum("TermField", config["termfields"])
 TermAggr = list_to_enum("TermAggr", config["termaggrs"])
 
@@ -290,7 +301,7 @@ def version_root(req: Request):
 @v1.get("/collections", tags=["data"])
 @v1.head("/collections", include_in_schema=False)
 def get_collections(req:Request):
-    return [i for index in ES.indices.get('*')]
+    return [col.value for col in Collection]
     
 
 
