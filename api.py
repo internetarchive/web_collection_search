@@ -39,10 +39,9 @@ ELASTICSEARCH_INDEX_NAME_PREFIX = os.getenv("ELASTICSEARCH_INDEX_NAME_PREFIX")
 ES = Elasticsearch(config["eshosts"], **config["esopts"])
 
 
-
 def get_allowed_collections():
     #Only expose indexes with the correct prefix, and add a wildcard as well. 
-    all_indexes = [i for index in ES.indices.get('*') if ELASTICSEARCH_INDEX_NAME_PREFIX in i]
+    all_indexes = [index for index in ES.indices.get(index='*') if ELASTICSEARCH_INDEX_NAME_PREFIX in index]
     all_indexes.extend([f"{ELASTICSEARCH_INDEX_NAME_PREFIX}_*)"])
     return all_indexes
 
