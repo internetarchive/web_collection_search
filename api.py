@@ -117,8 +117,7 @@ def cs_basic_query(q: str):
             "publication_date",
             "language",
             "canonical_domain",
-            "url",
-            "first_captured"
+            "url"
         ],
         "query": {
             "query_string": {
