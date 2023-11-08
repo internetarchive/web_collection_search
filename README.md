@@ -1,60 +1,34 @@
 # Web Archive Search Index API and UI
 
-An API wrapper to the Elasticsearch index of web archival collections and a web UI to explore those indexes.
+An API wrapper to the Elasticsearch index of web archival collections and a web UI to explore those indexes. A part of the [story-indexer stack](https://github.com/mediacloud/story-indexer). Mantained as a separate repository for future legibility. 
 
 ## ES Index
 
-The API service expects the following ES index schema, where `title` and `snippet` fields must have the `fielddata` enabled (if they have the type `text`) and `first_captured` field stores 14-digit datetime in the format `YYYYMMDDhhmmss`.
-
+The API service expects the following ES index schema, where `title` and `snippet` fields must have the `fielddata` enabled (if they have the type `text`).
+This is currently defined in the story-indexer stack, but is replicated here for convenience. 
 <details>
-<summary>$ curl -s http://localhost:9200/collection_index_name/_mappings | jq</summary>
 
 ```json
-{
-  "collection_index_name": {
-    "mappings": {
-      "properties": {
-        "domain": {
-          "type": "keyword"
+es_mappings = {
+    "properties": {
+        "original_url": {"type": "keyword"},
+        "url": {"type": "keyword"},
+        "normalized_url": {"type": "keyword"},
+        "canonical_domain": {"type": "keyword"},
+        "publication_date": {"type": "date", "ignore_malformed": True},
+        "language": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
+        "full_language": {"type": "keyword"},
+        "text_extraction": {"type": "keyword"},
+        "article_title": {
+            "type": "text",
+            "fields": {"keyword": {"type": "keyword"}},
         },
-        "first_captured": {
-          "type": "keyword"
+        "normalized_article_title": {
+            "type": "text",
+            "fields": {"keyword": {"type": "keyword"}},
         },
-        "host": {
-          "type": "keyword"
-        },
-        "language": {
-          "type": "keyword"
-        },
-        "publication_date": {
-          "type": "date"
-        },
-        "snippet": {
-          "type": "text",
-          "fielddata": true
-        },
-        "surt_url": {
-          "type": "keyword"
-        },
-        "text_extraction_method": {
-          "type": "keyword"
-        },
-        "title": {
-          "type": "text",
-          "fielddata": true
-        },
-        "tld": {
-          "type": "keyword"
-        },
-        "url": {
-          "type": "keyword"
-        },
-        "version": {
-          "type": "keyword"
-        }
-      }
+        "text_content": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
     }
-  }
 }
 ```
 
@@ -62,17 +36,9 @@ The API service expects the following ES index schema, where `title` and `snippe
 
 ## Run Services
 
-To run it clone this repository and update the config file to point to ES hosts and list index names (and optionally some other properties):
+This service is not designed to be run stand-alone, rather it is deployed as a component in the [story-indexer stack](https://github.com/mediacloud/story-indexer). Configurations is set using environment variables by setting corresponding upper-case names of the cofig parameters.
+Environment variables that accept a list (e.g., `ESHOSTS` and `INDEXES`) can have commas or spaces as separators. Configuration via a config file in the syntax of the provided config.yml.sample can be used for testing.
 
-```
-$ cp config.yml.sample config.yml
-$ open config.yml
-```
-
-Alternatively, these configs can also be set using environment variables by setting corresponding upper-case names of the cofig parameters.
-Environment variables that accept a list (e.g., `ESHOSTS` and `INDEXES`) can have commas or spaces as separators.
-
-If the config file name/location is different, specify it with `CONFIG` environment variable.
 
 Then run the API and UI services using Docker Compose:
 
@@ -85,4 +51,3 @@ Access an interactive API documentation and a collection index explorer in a web
 - API: http://localhost:8000/docs
 - UI: http://localhost:8001/
 
-## Docker compose
