@@ -1,6 +1,6 @@
 services:
   api:
-    image: colsearch
+    image: mcsystems/news-search-api
     build: .
     ports:
       - 8000:8000
@@ -10,7 +10,7 @@ services:
       - .:/app
 
   ui:
-    image: colsearch
+    image: mcsystems/news-search-api
     build: .
     environment:
       APIURL: http://api:8000/v1

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S docker image build -t colsearch . -f
+#!/usr/bin/env -S docker image build -t mcsystems/news-search-api . -f
 
 # Base image
 FROM    python:3.10 AS base
