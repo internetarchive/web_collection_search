@@ -241,7 +241,6 @@ def format_match(hit: dict, base: str, collection: str, expanded: bool = False):
         "language": src.get("language") or "",
         "full_langauge": src.get("full_language") or "",
         "url": src["url"],
-        "original_url": src["original_url"],
         "normalized_url": src["normalized_url"],
         "canonical_domain": src["canonical_domain"]
     }
