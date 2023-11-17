@@ -3,6 +3,7 @@
 
 import base64
 import os
+import time
 
 from enum import Enum
 from typing import Union
@@ -15,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
-from utils import load_config, env_to_list, env_to_dict, list_to_enum
+from utils import assert_elasticsearch_connection, logger, load_config, env_to_list, env_to_dict, list_to_enum
 
 
 class ApiVersion(str, Enum):
@@ -33,9 +34,19 @@ config["title"] = os.getenv("TITLE", config.get("title", ""))
 config["description"] = os.getenv("DESCRIPTION", config.get("description", ""))
 config["debug"] = str(os.getenv("DEBUG", config.get("debug", False))).lower() in ("true", "1", "t")
 
-ELASTICSEARCH_INDEX_NAME_PREFIX = os.getenv("ELASTICSEARCH_INDEX_NAME_PREFIX")
+ELASTICSEARCH_INDEX_NAME_PREFIX = os.getenv("ELASTICSEARCH_INDEX_NAME_PREFIX", "")
 
 ES = Elasticsearch(config["eshosts"], **config["esopts"])
+
+max_retries = 10
+retries = 0
+while not assert_elasticsearch_connection(ES):
+    retries += 1
+    if retries < max_retries:
+        time.sleep(5)
+        logger.info(f"Connection to elasticsearch failed {retries} times, retrying")
+    else:
+        raise RuntimeError(f"Elasticsearch connection failed {max_retries} times, giving up.")
 
 
 def get_allowed_collections():
@@ -43,7 +54,7 @@ def get_allowed_collections():
 
     all_indexes = [index for index in ES.indices.get(index='*') if index.startswith(ELASTICSEARCH_INDEX_NAME_PREFIX)]
     all_indexes.append(f"{ELASTICSEARCH_INDEX_NAME_PREFIX}_*)")
-
+    logger.info(f"Exposed indices: {all_indexes}")
     return all_indexes
 
 
