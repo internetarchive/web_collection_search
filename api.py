@@ -53,7 +53,7 @@ def get_allowed_collections():
     #Only expose indexes with the correct prefix, and add a wildcard as well. 
 
     all_indexes = [index for index in ES.indices.get(index='*') if index.startswith(ELASTICSEARCH_INDEX_NAME_PREFIX)]
-    all_indexes.append(f"{ELASTICSEARCH_INDEX_NAME_PREFIX}_*)")
+    all_indexes.append(f"{ELASTICSEARCH_INDEX_NAME_PREFIX}_*")
     logger.info(f"Exposed indices: {all_indexes}")
     return all_indexes
 
