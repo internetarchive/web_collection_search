@@ -240,9 +240,9 @@ def format_match(hit: dict, base: str, collection: str, expanded: bool = False):
         "indexed_date": (src.get("indexed_date") or "")[:10],
         "language": src.get("language") or "",
         "full_langauge": src.get("full_language") or "",
-        "url": src["url"],
-        "normalized_url": src["normalized_url"],
-        "canonical_domain": src["canonical_domain"]
+        "url": src.get("url") or "",
+        "normalized_url": src.get("normalized_url") or "",
+        "canonical_domain": src.get("canonical_domain") or ""
     }
     if expanded:
         res["text_content"] = src.get("text_content", "")
@@ -340,6 +340,7 @@ def search_root(collection: Collection, req: Request):
 
 def _search_overview(collection: Collection, q: str, req: Request):
     res = ES.search(index=collection.name, body=cs_overview_query(q))
+
     if not res["hits"]["hits"]:
         raise HTTPException(status_code=404, detail="No results found!")
     total = res["hits"]["total"]["value"]
