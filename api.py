@@ -247,7 +247,7 @@ def format_match(hit: dict, base: str, collection: str, expanded: bool = False):
         "full_langauge": src.get("full_language") or "[UNKNOWN]",
         "url": src.get("url") or "[UNKNOWN]",
         "normalized_url": src.get("normalized_url") or "[UNKNOWN]",
-        "original_url": src.get("original_url") or "[UNKNOWN]"
+        "original_url": src.get("original_url") or "[UNKNOWN]",
         "canonical_domain": src.get("canonical_domain") or "[UNKNOWN]"
     }
     if expanded:
