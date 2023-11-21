@@ -126,10 +126,14 @@ def cs_basic_query(q: str):
     return {
         "_source": [
             "article_title",
+            "normalized_article_title",
             "publication_date",
+            "indexed_date",
             "language",
+            "full_langauge",
             "canonical_domain",
-            "url"
+            "url",
+            "normalized_url"
         ],
         "query": {
             "query_string": {
@@ -238,11 +242,11 @@ def format_match(hit: dict, base: str, collection: str, expanded: bool = False):
         "normalized_article_title": src.get("normalized_article_title") or "[UNKNOWN]",
         "publication_date": (src.get("publication_date") or "")[:10],
         "indexed_date": (src.get("indexed_date") or "")[:10],
-        "language": src.get("language") or "",
-        "full_langauge": src.get("full_language") or "",
-        "url": src.get("url") or "",
-        "normalized_url": src.get("normalized_url") or "",
-        "canonical_domain": src.get("canonical_domain") or ""
+        "language": src.get("language") or "[UNKNOWN]",
+        "full_langauge": src.get("full_language") or "[UNKNOWN]",
+        "url": src.get("url") or "[UNKNOWN]",
+        "normalized_url": src.get("normalized_url") or "[UNKNOWN]",
+        "canonical_domain": src.get("canonical_domain") or "[UNKNOWN]"
     }
     if expanded:
         res["text_content"] = src.get("text_content", "")
