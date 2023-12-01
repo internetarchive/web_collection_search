@@ -175,8 +175,10 @@ def cs_overview_query(q: str):
                     "size": 100
                 }
             }
-        }
+        },
+        "track_total_hits": True,
     })
+
     return query
 
 
