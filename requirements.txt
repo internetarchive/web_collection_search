@@ -9,3 +9,4 @@ streamlit==1.29.*
 uvicorn[standard]
 wordcloud==1.9.*
 pyyaml==6.0.*
+pytest==7.*
