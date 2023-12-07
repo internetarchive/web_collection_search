@@ -60,3 +60,15 @@ class ApiTest(TestCase):
         assert len(results) == 1000
         next_page_token = response.headers.get('x-resume-token')
         assert next_page_token is not None
+        for story in results:
+            assert 'text_content' not in story
+
+    def test_text_content_expanded(self):
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "expanded": 1}, timeout=TIMEOUT)
+        assert response.status_code == 200
+        results = response.json()
+        assert len(results) == 1000
+        for story in results:
+            assert 'text_content' in story
+            assert len(story['text_content']) > 0
