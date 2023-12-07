@@ -1,7 +1,9 @@
-name: Docker Image CI
+name: Biuld Docker Image for Every Tag
 
 on:
-  - push
+  push:
+    tags:
+      - '**'
 
 jobs:
 
