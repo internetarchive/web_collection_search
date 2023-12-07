@@ -5,7 +5,7 @@ import hashlib
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConflictError
 
-from test import INDEX_NAME, ELASTICSEARCH_URL
+from test import INDEX_NAME, ELASTICSEARCH_URL, FIXTURES_DIR
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ es_client.indices.create(index=INDEX_NAME, mappings=es_mappings, ignore=400)  # 
 logger.info(f"Index '{INDEX_NAME}' with field mappings created successfully (or already exists.")
 
 # now import the fixtures
-with open(os.path.join('fixtures', "fake-data.json"), "r") as f:
+with open(os.path.join(FIXTURES_DIR, "fake-data.json"), "r") as f:
     imported_count = 0
     fixtures = json.load(f)
     logger.info(f"Loaded {len(fixtures)} fixtures to import")
