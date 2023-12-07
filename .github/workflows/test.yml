@@ -1,0 +1,36 @@
+name: Test Code
+
+on:
+  - push
+
+jobs:
+  test:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    name: Unit tests in Docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure sysctl limits
+        run: |
+          sudo swapoff -a
+          sudo sysctl -w vm.swappiness=1
+          sudo sysctl -w fs.file-max=262144
+          sudo sysctl -w vm.max_map_count=262144
+      - name: Run Elasticsearch
+        uses: elastic/elastic-github-actions/elasticsearch@master
+        with:
+          stack-version: 8.8.2
+          security-enabled: false
+      - name: Elasticsearch is reachable
+        run: |
+          curl --verbose --show-error http://localhost:9200
+
+      - name: Install python dependencies
+        run: |
+          pip install -r requirements.txt
+      - name: Install fixtures
+        run: |
+          python -m test.create_fixtures
+      - name: Run all tests
+        run: |
+          pytest
