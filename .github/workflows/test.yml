@@ -21,9 +21,16 @@ jobs:
         with:
           stack-version: 8.8.2
           security-enabled: false
+      - name: Elasticsearch is reachable
+        run: |
+          curl --verbose --show-error http://localhost:9200
+
       - name: Install python dependencies
         run: |
           pip install -r requirements.txt
-      - name: Test with pytest
+      - name: Install fixtures
+        run: |
+          python -m test.create_fixtures
+      - name: Run all tests
         run: |
           pytest
