@@ -5,19 +5,7 @@ FROM    python:3.10 AS base
 ENV     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 WORKDIR /app
 CMD     ["./api.py"]
-RUN     pip install --no-cache-dir \
-            altair \
-            "elasticsearch==8.8.0" \
-            fastapi \
-            matplotlib \
-            pandas \
-            pydantic \
-            requests \
-            streamlit \
-            "uvicorn[standard]" \
-            wordcloud \
-            pyyaml
-
+RUN     pip install --no-cache-dir -r requirements.txt
 # Lint code
 FROM    base
 RUN     pip install --no-cache-dir pylint

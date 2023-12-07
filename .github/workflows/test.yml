@@ -21,6 +21,9 @@ jobs:
         with:
           stack-version: 8.8.2
           security-enabled: false
+      - name: Install python dependencies
+        run: |
+          pip install -r requirements.txt
       - name: Test with pytest
         run: |
           pytest
