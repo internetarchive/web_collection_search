@@ -17,7 +17,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Dump tag name
-        run: echo "Building tag ${GITHUB_REF_NAME}"
+        run: echo "Building tag ${{github.ref_name}}"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -37,4 +37,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: mcsystems/news-search-api:dev
+          tags: mcsystems/news-search-api:${{github.ref_name}}
