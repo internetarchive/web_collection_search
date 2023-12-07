@@ -187,7 +187,7 @@ def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
     aggr_map = {
         "top": {
             "terms": {
-                "field": f"{field}.keyword",
+                "field": field,
                 "size": resct,
                 "min_doc_count": 10,
                 "shard_min_doc_count": 5
@@ -195,7 +195,7 @@ def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
         },
         "significant": {
             "significant_terms": {
-                "field": f"{field}.keyword",
+                "field": field,
                 "size": resct,
                 "min_doc_count": 10,
                 "shard_min_doc_count": 5
@@ -203,7 +203,7 @@ def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
         },
         "rare": {
             "rare_terms": {
-                "field": f"{field}.keyword",
+                "field": field,
                 "exclude": "[0-9].*"
             }
         }
