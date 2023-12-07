@@ -15,7 +15,7 @@ class ApiTest(TestCase):
     def setUp(self):
         self._client = TestClient(app)
 
-    def test_search_all(self):
+    def test_overview_all(self):
         # make sure all stories come back and domain is right
         response = self._client.post(f'/v1/{INDEX_NAME}/search/overview', json={"q": "*"}, timeout=TIMEOUT)
         assert response.status_code == 200
@@ -27,11 +27,11 @@ class ApiTest(TestCase):
             assert 'canonical_domain' in story
             assert story['canonical_domain'] == 'example.com'
 
-    def test_no_results(self):
+    def test_overview_no_results(self):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/overview', json={"q": "asdfdf"}, timeout=TIMEOUT)
         assert response.status_code == 404
 
-    def test_search_content(self):
+    def test_overview_by_content(self):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/overview', json={"q": "article"}, timeout=TIMEOUT)
         assert response.status_code == 200
         results = response.json()
@@ -43,10 +43,17 @@ class ApiTest(TestCase):
         assert 'total' in results
         assert results['total'] == 1
 
-    def test_search_date(self):
+    def test_overview_by_pub_date(self):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/overview',
                                      json={"q": "* AND publication_date:[2023-12-01 TO 2023-12-10]"}, timeout=TIMEOUT)
         assert response.status_code == 200
         results = response.json()
         assert 'total' in results
         assert results['total'] == 1
+
+    def test_list_by_date(self):
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "* AND publication_date:[2023-12-01 TO 2023-12-10]"}, timeout=TIMEOUT)
+        assert response.status_code == 200
+        results = response.json()
+        assert len(results) == 1
