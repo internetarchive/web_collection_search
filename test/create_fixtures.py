@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import copy
 import hashlib
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ConflictError
@@ -40,15 +41,36 @@ es_client.indices.create(index=INDEX_NAME, mappings=es_mappings, ignore=400)  # 
 logger.info(f"Index '{INDEX_NAME}' with field mappings created successfully (or already exists.")
 
 # now import the fixtures
-with open(os.path.join(FIXTURES_DIR, "fake-data.json"), "r") as f:
-    imported_count = 0
-    fixtures = json.load(f)
-    logger.info(f"Loaded {len(fixtures)} fixtures to import")
-    for fixture in fixtures:
-        url_hash = hashlib.sha256(fixture['url'].encode("utf-8")).hexdigest()
-        try:
-            response = es_client.index(index=INDEX_NAME, id=url_hash, document=fixture)
-            imported_count += 1
-        except ConflictError:
-            logger.warning("  duplicate fixture, ignoring")
-    logger.info(f"  Imported {imported_count}")
+base_fixture = {
+    "original_url": "http://example.com/article",
+    "url": "http://example.com/article",
+    "normalized_url": "http://example.com/article",
+    "article_title": "Sample Article ",
+    "normalized_article_title": "sample_article_",
+    "text_content": "This is the content of the sample article ",
+    "canonical_domain": "example.com",
+    "publication_date": "2023-11-01",
+    "indexed_date": "2023-12-01",
+    "language": "en",
+    "full_language": "en-us",
+    "text_extraction": "trafilatura",
+}
+
+imported_count = 0
+for idx in range(0, 2000):
+    fixture = copy.copy(base_fixture)
+    fixture['original_url'] += str(idx)
+    fixture['url'] += str(idx)
+    fixture['normalized_url'] += str(idx)
+    fixture['article_title'] += str(idx)
+    fixture['normalized_article_title'] += str(idx)
+    fixture['text_content'] += str(idx)
+    fixture['publication_date'] = "2023-" + str(10+int(idx / 1000)) + "-" + str(1 + (idx % 29)).zfill(2)
+    fixture['indexed_date'] = "2023-" + str(10+int(idx / 1000)) + "-" + str(1 + (idx % 29)).zfill(2)
+    url_hash = hashlib.sha256(fixture['url'].encode("utf-8")).hexdigest()
+    try:
+        response = es_client.index(index=INDEX_NAME, id=url_hash, document=fixture)
+        imported_count += 1
+    except ConflictError:
+        logger.warning("  duplicate fixture, ignoring")
+logger.info(f"  Imported {imported_count}")

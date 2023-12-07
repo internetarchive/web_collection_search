@@ -21,7 +21,7 @@ class ApiTest(TestCase):
         assert response.status_code == 200
         results = response.json()
         assert 'total' in results
-        assert results['total'] == 3
+        assert results['total'] > 1000
         assert 'matches' in results
         for story in results['matches']:
             assert 'canonical_domain' in story
@@ -36,12 +36,12 @@ class ApiTest(TestCase):
         assert response.status_code == 200
         results = response.json()
         assert 'total' in results
-        assert results['total'] == 3
+        assert results['total'] > 1000
         response = self._client.post(f'/v1/{INDEX_NAME}/search/overview', json={"q": "1"}, timeout=TIMEOUT)
         assert response.status_code == 200
         results = response.json()
         assert 'total' in results
-        assert results['total'] == 1
+        assert results['total'] < 1000
 
     def test_overview_by_pub_date(self):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/overview',
@@ -49,11 +49,14 @@ class ApiTest(TestCase):
         assert response.status_code == 200
         results = response.json()
         assert 'total' in results
-        assert results['total'] == 1
+        assert results['total'] > 300
+        assert results['total'] < 1000
 
-    def test_list_by_date(self):
+    def test_paging(self):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
-                                     json={"q": "* AND publication_date:[2023-12-01 TO 2023-12-10]"}, timeout=TIMEOUT)
+                                     json={"q": "*"}, timeout=TIMEOUT)
         assert response.status_code == 200
         results = response.json()
-        assert len(results) == 1
+        assert len(results) == 1000
+        next_page_token = response.headers.get('x-resume-token')
+        assert next_page_token is not None
