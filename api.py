@@ -389,7 +389,7 @@ def _search_result(collection: Collection, q: str, req: Request, resp: Response,
     base = proxy_base_url(req)
     qurl = f"{base}/{collection.value}/search/result?q={quote_plus(q)}"
     if len(res["hits"]["hits"]) == config["maxpage"]:
-        resume_key = encode(res["hits"]["hits"][-1]["sort"][0])
+        resume_key = encode(str(res["hits"]["hits"][-1]["sort"][0]))
         resp.headers["x-resume-token"] = resume_key
         resp.headers["link"] = f'<{qurl}&resume={resume_key}>; rel="next"'
     return [format_match(h, base, collection.value) for h in res["hits"]["hits"]]
