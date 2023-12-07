@@ -108,6 +108,7 @@ v1 = FastAPI(
 
 class Query(BaseModel):
     q: str
+    expanded: bool = False
 
 
 class PagedQuery(Query):
@@ -122,8 +123,8 @@ def decode(strng: str):
     return base64.b64decode(strng.replace("~", "=").encode(), b"-_").decode()
 
 
-def cs_basic_query(q: str):
-    return {
+def cs_basic_query(q: str, expanded: bool = False):
+    default = {
         "_source": [
             "article_title",
             "normalized_article_title",
@@ -144,6 +145,9 @@ def cs_basic_query(q: str):
             }
         }
     }
+    if expanded:
+        default["_source"].extend(["text_content", "text_extraction"])
+    return default
 
 
 def cs_overview_query(q: str):
@@ -226,8 +230,8 @@ def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
     return query
 
 
-def cs_paged_query(q: str, resume: Union[str, None] = None):
-    query = cs_basic_query(q)
+def cs_paged_query(q: str, resume: Union[str, None] = None, expanded: bool = False):
+    query = cs_basic_query(q, expanded)
     query.update({
         "size": config["maxpage"],
         "track_total_hits": False,
@@ -382,8 +386,9 @@ def search_overview_via_payload(collection: Collection, req: Request, payload: Q
     return _search_overview(collection, payload.q, req)
 
 
-def _search_result(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None):
-    res = ES.search(index=collection.name, body=cs_paged_query(q, resume))
+def _search_result(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None,
+                   expanded: bool = False):
+    res = ES.search(index=collection.name, body=cs_paged_query(q, resume, expanded))
     if not res["hits"]["hits"]:
         raise HTTPException(status_code=404, detail="No results found!")
     base = proxy_base_url(req)
@@ -392,16 +397,17 @@ def _search_result(collection: Collection, q: str, req: Request, resp: Response,
         resume_key = encode(str(res["hits"]["hits"][-1]["sort"][0]))
         resp.headers["x-resume-token"] = resume_key
         resp.headers["link"] = f'<{qurl}&resume={resume_key}>; rel="next"'
-    return [format_match(h, base, collection.value) for h in res["hits"]["hits"]]
+    return [format_match(h, base, collection.value, expanded) for h in res["hits"]["hits"]]
 
 
 @v1.get("/{collection}/search/result", tags=["data"])
 @v1.head("/{collection}/search/result", include_in_schema=False)
-def search_result_via_query_params(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None):  # pylint: disable=line-too-long
+def search_result_via_query_params(collection: Collection, q: str, req: Request, resp: Response,
+                                   resume: Union[str, None] = None, expanded: bool = False):
     """
     Paged response of search result
     """
-    return _search_result(collection, q, req, resp, resume)
+    return _search_result(collection, q, req, resp, resume, expanded)
 
 
 @v1.post("/{collection}/search/result", tags=["data"])
@@ -409,7 +415,7 @@ def search_result_via_payload(collection: Collection, req: Request, resp: Respon
     """
     Paged response of search result
     """
-    return _search_result(collection, payload.q, req, resp, payload.resume)
+    return _search_result(collection, payload.q, req, resp, payload.resume, payload.expanded)
 
 
 if config["debug"]:
