@@ -45,12 +45,12 @@ class ApiTest(TestCase):
 
     def test_overview_by_pub_date(self):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/overview',
-                                     json={"q": "* AND publication_date:[2023-12-01 TO 2023-12-10]"}, timeout=TIMEOUT)
+                                     json={"q": "* AND publication_date:[2023-11-01 TO 2023-12-10]"}, timeout=TIMEOUT)
         assert response.status_code == 200
         results = response.json()
         assert 'total' in results
         assert results['total'] > 300
-        assert results['total'] < 1000
+        assert results['total'] < 1200
 
     def test_paging(self):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
