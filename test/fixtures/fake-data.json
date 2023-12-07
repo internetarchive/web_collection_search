@@ -1,0 +1,44 @@
+[
+  {
+    "original_url": "http://example.com/article1",
+    "url": "http://example.com/article1",
+    "normalized_url": "http://example.com/article1",
+    "canonical_domain": "example.com",
+    "publication_date": "2023-12-01",
+    "language": "en",
+    "full_language": "en",
+    "text_extraction": "trafilatura",
+    "article_title": "Sample Article 1",
+    "normalized_article_title": "sample_article_1",
+    "text_content": "This is the content of the sample article 1.",
+    "indexed_date": "2023-12-07"
+  },
+  {
+    "original_url": "http://example.com/article2",
+    "url": "http://example.com/article2",
+    "normalized_url": "http://example.com/article2",
+    "canonical_domain": "example.com",
+    "publication_date": "2023-11-28",
+    "language": "es",
+    "full_language": "es",
+    "text_extraction": "trafilatura",
+    "article_title": "Sample Article 2",
+    "normalized_article_title": "sample_article_2",
+    "text_content": "This is the content of the sample article 2.",
+    "indexed_date": "2023-12-05"
+  },
+  {
+    "original_url": "http://example.com/article3",
+    "url": "http://example.com/article3",
+    "normalized_url": "http://example.com/article3",
+    "canonical_domain": "example.com",
+    "publication_date": "2023-11-01",
+    "language": "fr",
+    "full_language": "fr",
+    "text_extraction": "trafilatura",
+    "article_title": "Sample Article 3",
+    "normalized_article_title": "sample_article_3",
+    "text_content": "This is the content of the sample article 3.",
+    "indexed_date": "2023-12-01"
+  }
+ ]
