@@ -140,3 +140,4 @@ cython_debug/
 # App-specific ignores
 config.yml
 *.back
+.idea
