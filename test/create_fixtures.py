@@ -11,7 +11,7 @@ from test import INDEX_NAME, ELASTICSEARCH_URL, FIXTURES_DIR
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-es_client = Elasticsearch(hosts=[ELASTICSEARCH_URL], basic_auth=("elastic", "changeme"), verify_certs=False)
+es_client = Elasticsearch(hosts=[ELASTICSEARCH_URL], verify_certs=False)
 
 # first create the index
 es_mappings = {

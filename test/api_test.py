@@ -3,7 +3,9 @@ from unittest import TestCase
 from fastapi.testclient import TestClient
 
 from test import INDEX_NAME, ELASTICSEARCH_URL
-os.environ["eshosts"] = ELASTICSEARCH_URL
+os.environ["INDEXES"] = INDEX_NAME
+os.environ["ESHOSTS"] = ELASTICSEARCH_URL
+os.environ["ELASTICSEARCH_INDEX_NAME_PREFIX"] = "mediacloud"
 # make sure to set this env var before importing the app
 from api import app
 
