@@ -1,7 +1,9 @@
-name: Biuld Docker Image for Every Tag
+name: Build Docker Image for Every Tag
 
 on:
   push:
+    branches:
+      - main
     tags:
       - '**'
 
