@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-
-
 import base64
 import os
 import time
 
 from enum import Enum
-from typing import Union
+from typing import Union, Optional, Dict
 from urllib.parse import quote_plus
 
 from elasticsearch import Elasticsearch
@@ -106,13 +104,19 @@ v1 = FastAPI(
 )
 
 
+VALID_SORT_ORDERS = ["asc", "desc"]
+VALID_SORT_FIELDS = ["publication_date", "indexed_date"]
+
+
 class Query(BaseModel):
     q: str
-    expanded: bool = False
 
 
 class PagedQuery(Query):
     resume: Union[str, None] = None
+    expanded: bool = False
+    sort_field: Optional[str] = None
+    sort_order: Optional[str] = None
 
 
 def encode(strng: str):
@@ -123,7 +127,7 @@ def decode(strng: str):
     return base64.b64decode(strng.replace("~", "=").encode(), b"-_").decode()
 
 
-def cs_basic_query(q: str, expanded: bool = False):
+def cs_basic_query(q: str, expanded: bool = False) -> Dict:
     default = {
         "_source": [
             "article_title",
@@ -230,12 +234,29 @@ def cs_terms_query(q: str, field: str = "article_title", aggr: str = "top"):
     return query
 
 
-def cs_paged_query(q: str, resume: Union[str, None] = None, expanded: bool = False):
+def _validate_sort_order(sort_order: Optional[str]):
+    if sort_order and sort_order not in VALID_SORT_ORDERS:
+        raise HTTPException(status_code=400,
+                            detail=f"Invalid sort order (must be on of {', '.join(VALID_SORT_ORDERS)})")
+
+
+def _validate_sort_field(sort_field: Optional[str]):
+    if sort_field and sort_field not in VALID_SORT_FIELDS:
+        raise HTTPException(status_code=400,
+                            detail=f"Invalid sort field (must be on of {', '.join(VALID_SORT_FIELDS)})")
+
+
+def cs_paged_query(q: str, resume: Optional[str], expanded: Optional[bool], sort_field=Optional[str],
+                   sort_order=Optional[str]) -> Dict:
     query = cs_basic_query(q, expanded)
+    final_sort_field = sort_field or "publication_date"
+    _validate_sort_field(final_sort_field)
+    final_sort_order = sort_order or "desc"
+    _validate_sort_order(final_sort_order)
     query.update({
         "size": config["maxpage"],
         "track_total_hits": False,
-        "sort": [{"publication_date": "asc"}]
+        "sort": [{final_sort_field: final_sort_order}]
     })
     if resume:
         query["search_after"] = [decode(resume)]
@@ -387,8 +408,10 @@ def search_overview_via_payload(collection: Collection, req: Request, payload: Q
 
 
 def _search_result(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None,
-                   expanded: bool = False):
-    res = ES.search(index=collection.name, body=cs_paged_query(q, resume, expanded))
+                   expanded: bool = False, sort_field: str = None,
+                   sort_order: str = None):
+    query = cs_paged_query(q, resume, expanded, sort_field, sort_order)
+    res = ES.search(index=collection.name, body=query)
     if not res["hits"]["hits"]:
         raise HTTPException(status_code=404, detail="No results found!")
     base = proxy_base_url(req)
@@ -403,11 +426,12 @@ def _search_result(collection: Collection, q: str, req: Request, resp: Response,
 @v1.get("/{collection}/search/result", tags=["data"])
 @v1.head("/{collection}/search/result", include_in_schema=False)
 def search_result_via_query_params(collection: Collection, q: str, req: Request, resp: Response,
-                                   resume: Union[str, None] = None, expanded: bool = False):
+                                   resume: Union[str, None] = None, expanded: bool = False,
+                                   sort_field: Optional[str] = None, sort_order: Optional[str] = None):
     """
     Paged response of search result
     """
-    return _search_result(collection, q, req, resp, resume, expanded)
+    return _search_result(collection, q, req, resp, resume, expanded, sort_field, sort_order)
 
 
 @v1.post("/{collection}/search/result", tags=["data"])
@@ -415,7 +439,8 @@ def search_result_via_payload(collection: Collection, req: Request, resp: Respon
     """
     Paged response of search result
     """
-    return _search_result(collection, payload.q, req, resp, payload.resume, payload.expanded)
+    return _search_result(collection, payload.q, req, resp, payload.resume, payload.expanded,
+                          payload.sort_field, payload.sort_order)
 
 
 if config["debug"]:

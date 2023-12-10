@@ -1,12 +1,14 @@
 import os
 from unittest import TestCase
+import datetime as dt
 from fastapi.testclient import TestClient
 
 from test import INDEX_NAME, ELASTICSEARCH_URL
+# make sure to set these env vars before importing the app so it runs against a test ES you've set up with
+# the `create_fixtures.py` script
 os.environ["INDEXES"] = INDEX_NAME
 os.environ["ESHOSTS"] = ELASTICSEARCH_URL
 os.environ["ELASTICSEARCH_INDEX_NAME_PREFIX"] = "mediacloud"
-# make sure to set this env var before importing the app
 from api import app
 
 TIMEOUT = 30
@@ -62,8 +64,6 @@ class ApiTest(TestCase):
         assert len(results) == 1000
         next_page_token = response.headers.get('x-resume-token')
         assert next_page_token is not None
-        for story in results:
-            assert 'text_content' not in story
 
     def test_text_content_expanded(self):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
@@ -74,3 +74,64 @@ class ApiTest(TestCase):
         for story in results:
             assert 'text_content' in story
             assert len(story['text_content']) > 0
+
+    def test_story_sort_order(self):
+        # desc
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*"}, timeout=TIMEOUT)
+        assert response.status_code == 200
+        results = response.json()
+        tomorrow = dt.date.today() + dt.timedelta(days=1)
+        last_pub_date = tomorrow
+        for story in results:
+            assert 'text_content' not in story
+            assert 'publication_date' in story
+            story_pub_date = dt.date.fromisoformat(story['publication_date'])
+            assert story_pub_date <= last_pub_date
+            last_pub_date = story_pub_date
+        # asc
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "sort_order": "asc"}, timeout=TIMEOUT)
+        results = response.json()
+        a_long_time_ago = dt.date(2000, 1, 1)
+        last_pub_date = a_long_time_ago
+        for story in results:
+            assert 'publication_date' in story
+            story_pub_date = dt.date.fromisoformat(story['publication_date'])
+            assert story_pub_date >= last_pub_date
+            last_pub_date = story_pub_date
+        # invalid
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "sort_order": "foo"}, timeout=TIMEOUT)
+        assert response.status_code == 400
+
+    def test_story_sort_field(self):
+        # desc
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "sort_field": "publication_date"}, timeout=TIMEOUT)
+        assert response.status_code == 200
+        results = response.json()
+        tomorrow = dt.date.today() + dt.timedelta(days=1)
+        last_date = tomorrow
+        for story in results:
+            assert 'text_content' not in story
+            assert 'publication_date' in story
+            story_date = dt.date.fromisoformat(story['publication_date'])
+            assert story_date <= last_date
+            last_date = story_date
+        # indexed date
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "sort_field": "indexed_date"}, timeout=TIMEOUT)
+        assert response.status_code == 200
+        results = response.json()
+        tomorrow = dt.date.today() + dt.timedelta(days=1)
+        last_date = tomorrow
+        for story in results:
+            assert 'indexed_date' in story
+            story_date = dt.date.fromisoformat(story['indexed_date'])
+            assert story_date <= last_date
+            last_date = story_date
+        # invalid
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "sort_field": "imagined_date"}, timeout=TIMEOUT)
+        assert response.status_code == 400
