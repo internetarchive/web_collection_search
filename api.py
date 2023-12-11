@@ -247,6 +247,12 @@ def _validate_sort_field(sort_field: Optional[str]):
                             detail=f"Invalid sort field (must be on of {', '.join(VALID_SORT_FIELDS)})")
 
 
+def _validate_page_size(page_size: Optional[int]):
+    if page_size and page_size < 1:
+        raise HTTPException(status_code=400,
+                            detail=f"Invalid page size (must be greater than 0)")
+
+
 def cs_paged_query(q: str, resume: Optional[str], expanded: Optional[bool], sort_field=Optional[str],
                    sort_order=Optional[str], page_size=Optional[int]) -> Dict:
     query = cs_basic_query(q, expanded)
@@ -255,6 +261,7 @@ def cs_paged_query(q: str, resume: Optional[str], expanded: Optional[bool], sort
     final_sort_order = sort_order or "desc"
     _validate_sort_order(final_sort_order)
     final_page_size = page_size or config["maxpage"]
+    _validate_page_size(final_page_size)
     query.update({
         "size": final_page_size,
         "track_total_hits": False,

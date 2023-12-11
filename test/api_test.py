@@ -137,8 +137,16 @@ class ApiTest(TestCase):
         assert response.status_code == 400
 
     def test_page_size(self):
+        # test valid number
         response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
-                                     json={"q": "*", "page_size": 10}, timeout=TIMEOUT)
+                                     json={"q": "*", "page_size": 103}, timeout=TIMEOUT)
         assert response.status_code == 200
         results = response.json()
-        assert len(results) == 10
+        assert len(results) == 103
+        # test invalid value
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "page_size": '💩'}, timeout=TIMEOUT)
+        assert response.status_code == 422
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "page_size": -10}, timeout=TIMEOUT)
+        assert response.status_code == 400
