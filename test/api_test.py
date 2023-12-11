@@ -135,3 +135,10 @@ class ApiTest(TestCase):
         response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
                                      json={"q": "*", "sort_field": "imagined_date"}, timeout=TIMEOUT)
         assert response.status_code == 400
+
+    def test_page_size(self):
+        response = self._client.post(f'/v1/{INDEX_NAME}/search/result',
+                                     json={"q": "*", "page_size": 10}, timeout=TIMEOUT)
+        assert response.status_code == 200
+        results = response.json()
+        assert len(results) == 10

@@ -117,6 +117,7 @@ class PagedQuery(Query):
     expanded: bool = False
     sort_field: Optional[str] = None
     sort_order: Optional[str] = None
+    page_size: Optional[int] = None
 
 
 def encode(strng: str):
@@ -247,18 +248,21 @@ def _validate_sort_field(sort_field: Optional[str]):
 
 
 def cs_paged_query(q: str, resume: Optional[str], expanded: Optional[bool], sort_field=Optional[str],
-                   sort_order=Optional[str]) -> Dict:
+                   sort_order=Optional[str], page_size=Optional[int]) -> Dict:
     query = cs_basic_query(q, expanded)
     final_sort_field = sort_field or "publication_date"
     _validate_sort_field(final_sort_field)
     final_sort_order = sort_order or "desc"
     _validate_sort_order(final_sort_order)
+    final_page_size = page_size or config["maxpage"]
     query.update({
-        "size": config["maxpage"],
+        "size": final_page_size,
         "track_total_hits": False,
         "sort": [{final_sort_field: final_sort_order}]
     })
     if resume:
+        # important to use `search_after` instead of 'from' for memory reasons related to paging through more
+        # than 10k results
         query["search_after"] = [decode(resume)]
     return query
 
@@ -342,7 +346,6 @@ def version_root(req: Request):
 @v1.head("/collections", include_in_schema=False)
 def get_collections(req:Request):
     return [col.value for col in Collection]
-    
 
 
 @v1.get("/{collection}", response_class=HTMLResponse, tags=["info"])
@@ -409,8 +412,8 @@ def search_overview_via_payload(collection: Collection, req: Request, payload: Q
 
 def _search_result(collection: Collection, q: str, req: Request, resp: Response, resume: Union[str, None] = None,
                    expanded: bool = False, sort_field: str = None,
-                   sort_order: str = None):
-    query = cs_paged_query(q, resume, expanded, sort_field, sort_order)
+                   sort_order: str = None, page_size: int = None):
+    query = cs_paged_query(q, resume, expanded, sort_field, sort_order, page_size)
     res = ES.search(index=collection.name, body=query)
     if not res["hits"]["hits"]:
         raise HTTPException(status_code=404, detail="No results found!")
@@ -427,11 +430,12 @@ def _search_result(collection: Collection, q: str, req: Request, resp: Response,
 @v1.head("/{collection}/search/result", include_in_schema=False)
 def search_result_via_query_params(collection: Collection, q: str, req: Request, resp: Response,
                                    resume: Union[str, None] = None, expanded: bool = False,
-                                   sort_field: Optional[str] = None, sort_order: Optional[str] = None):
+                                   sort_field: Optional[str] = None, sort_order: Optional[str] = None,
+                                   page_size: Optional[int] = None):
     """
     Paged response of search result
     """
-    return _search_result(collection, q, req, resp, resume, expanded, sort_field, sort_order)
+    return _search_result(collection, q, req, resp, resume, expanded, sort_field, sort_order, page_size)
 
 
 @v1.post("/{collection}/search/result", tags=["data"])
@@ -440,7 +444,7 @@ def search_result_via_payload(collection: Collection, req: Request, resp: Respon
     Paged response of search result
     """
     return _search_result(collection, payload.q, req, resp, payload.resume, payload.expanded,
-                          payload.sort_field, payload.sort_order)
+                          payload.sort_field, payload.sort_order, payload.page_size)
 
 
 if config["debug"]:
