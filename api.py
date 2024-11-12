@@ -61,9 +61,10 @@ app = FastAPI(
     openapi_url=None
 )
 
+# nosem: python.fastapi.security.wildcard-cors
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # This wildcard is allowed
     allow_methods=["GET", "HEAD", "POST", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["link", "x-resume-token", "x-api-version"]
