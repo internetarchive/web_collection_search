@@ -63,7 +63,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # nosemgrep: python.fastapi.security.wildcard-cors
+    allow_origins=["*"],  # nosemgrep: python.fastapi.security.wildcard-cors.wildcard-cors
     allow_methods=["GET", "HEAD", "POST", "OPTIONS"],
     allow_headers=["*"],
     expose_headers=["link", "x-resume-token", "x-api-version"]
