@@ -5,8 +5,7 @@ FROM    python:3.10 AS base
 ENV     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 WORKDIR /app
 
-# nosemgrep: dockerfile.security.missing-user
-CMD     ["./api.py"] #Update with nomad supported user if create 
+CMD     ["./api.py"]
 RUN     pip install --no-cache-dir \
             altair \
             "elasticsearch>=7.0.0,<8.0.0" \
