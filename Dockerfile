@@ -19,7 +19,7 @@ RUN     pip install --no-cache-dir \
             pyyaml
 
 # Lint code
-FROM    base AS lint
+FROM    base
 RUN     pip install --no-cache-dir pylint
 COPY    . ./
 RUN     pylint *.py \
@@ -29,9 +29,9 @@ RUN     pylint *.py \
             --extension-pkg-whitelist="pydantic"
 
 # Build image
-FROM    base AS final
+FROM    base
 # Create a non-root user
-RUN      adduser --disabled-password --gecos "" appuser
+RUN     adduser --disabled-password --gecos "" appuser
 COPY    --chown=appuser:appuser . ./
 USER    appuser
-CMD     ["python3", "./api.py"]
+CMD     ["./api.py"]
