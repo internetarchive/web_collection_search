@@ -5,8 +5,6 @@ FROM    python:3.10 AS base
 ENV     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 WORKDIR /app
 
-# nosemgrep: dockerfile.security.missing-user
-CMD     ["./api.py"] #Update with nomad supported user if create 
 RUN     pip install --no-cache-dir \
             altair \
             "elasticsearch>=7.0.0,<8.0.0" \
@@ -32,4 +30,8 @@ RUN     pylint *.py \
 
 # Build image
 FROM    base
-COPY    . ./
+# Create a non-root user
+RUN     adduser --disabled-password --gecos "" appuser
+COPY    --chown=appuser:appuser . ./
+USER    appuser
+CMD     ["./api.py"]
