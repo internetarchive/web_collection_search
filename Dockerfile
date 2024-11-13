@@ -5,7 +5,6 @@ FROM    python:3.10 AS base
 ENV     STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
 WORKDIR /app
 
-CMD     ["./api.py"]
 RUN     pip install --no-cache-dir \
             altair \
             "elasticsearch>=7.0.0,<8.0.0" \
@@ -20,7 +19,7 @@ RUN     pip install --no-cache-dir \
             pyyaml
 
 # Lint code
-FROM    base
+FROM    base AS lint
 RUN     pip install --no-cache-dir pylint
 COPY    . ./
 RUN     pylint *.py \
@@ -30,5 +29,9 @@ RUN     pylint *.py \
             --extension-pkg-whitelist="pydantic"
 
 # Build image
-FROM    base
-COPY    . ./
+FROM    base AS final
+# Create a non-root user
+RUN      adduser --disabled-password --gecos "" appuser
+COPY    --chown=appuser:appuser . ./
+USER    appuser
+CMD     ["python3", "./api.py"]
