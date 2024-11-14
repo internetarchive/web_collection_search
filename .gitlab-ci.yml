@@ -1,5 +1,6 @@
 variables:
   NOMAD_VAR_HOSTNAMES: '["colsearch.crawl1.archive.org"]'
+  NOMAD_VAR_PORTS: '{ 8000 = "http"}'
   NOMAD_VAR_METRICS: 'false'
   NOMAD_VAR_CHECK_PROTOCOL: 'http'
   NOMAD_VAR_CHECK_PATH: '/'
